@@ -1,0 +1,11 @@
+.venv*/
+/data/
+/nnunet/
+/logs/
+__pycache__/
+*.pyc
+.DS_Store
+/papers/
+/third_party/
+/jobs/
+/results/

@@ -1,0 +1,177 @@
+From be235362ee60b5951a5457c978765245fc4a96c5 Mon Sep 17 00:00:00 2001
+From: mkrastev <noreply@local>
+Date: Fri, 25 Sep 2026 00:59:46 +0300
+Subject: [PATCH] DiffLoss: per-axis checkpointed, uint8 one-hot (identical
+ loss/grad, fits 16 GB)
+
+---
+ .../__pycache__/diff_loss.cpython-312.pyc     | Bin 6174 -> 6693 bytes
+ nnunetv2/training/loss/diff_loss.py           |  42 ++++++++++--------
+ 2 files changed, 24 insertions(+), 18 deletions(-)
+
+diff --git a/nnunetv2/training/loss/__pycache__/diff_loss.cpython-312.pyc b/nnunetv2/training/loss/__pycache__/diff_loss.cpython-312.pyc
+index 7d2bd8a36569b96ffab1e19fcc0c00338c64b052..5433427eb5f4dc1d7ac404e2c55a6ebf04495266 100644
+GIT binary patch
+delta 2926
+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
+Qx#mL6uM8TDV&EtS0N=CBE&u=k
+
+delta 2431
+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
+
+diff --git a/nnunetv2/training/loss/diff_loss.py b/nnunetv2/training/loss/diff_loss.py
+index 9ad6d6e..bc78ef7 100644
+--- a/nnunetv2/training/loss/diff_loss.py
++++ b/nnunetv2/training/loss/diff_loss.py
+@@ -6,7 +6,24 @@ from nnunetv2.training.loss.dice import MemoryEfficientSoftDiceLoss, SoftSkeleto
+ from nnunetv2.training.loss.robust_ce_loss import RobustCrossEntropyLoss
+ from nnunetv2.utilities.helpers import softmax_helper_dim1
+ 
++def _axis_sq_diff_mean(x, y_onehot_u8, dim):
++    """mean((dy - dx)**2) along one spatial axis; y is cast here so the float
++    one-hot never has to be materialised for all axes at once."""
++    n = x.shape[dim]
++    y = y_onehot_u8.to(x.dtype)
++    gt_diff = y.narrow(dim, 1, n - 1) - y.narrow(dim, 0, n - 1)
++    pred_diff = x.narrow(dim, 1, n - 1) - x.narrow(dim, 0, n - 1)
++    return ((gt_diff - pred_diff) ** 2).mean()
++
++
+ class DiffLoss(nn.Module):
++    """Same value as the original DiffLoss; memory-efficient for 16 GB GPUs.
++
++    Change vs. the released code (training on an RTX 5070 Ti instead of a
++    96 GB RTX PRO 6000): each axis term is computed separately under gradient
++    checkpointing, and the one-hot target is kept as uint8. The loss is the
++    same average over the three axes of mean((gt_diff - pred_diff)**2).
++    """
+     def __init__(self, apply_nonlin: Callable = None, do_bg: bool = True):
+         super(DiffLoss, self).__init__()
+ 
+@@ -14,41 +31,30 @@ class DiffLoss(nn.Module):
+         self.apply_nonlin = apply_nonlin
+ 
+     def forward(self, x, y, loss_mask=None):
++        from torch.utils.checkpoint import checkpoint
+         if self.apply_nonlin is not None:
+             x = self.apply_nonlin(x)
+ 
+-        # make everything shape (b, c)
+-        axes = tuple(range(2, x.ndim))
+-
+         with torch.no_grad():
+             if x.ndim != y.ndim:
+                 y = y.view((y.shape[0], 1, *y.shape[1:]))
+ 
+             if x.shape == y.shape:
+-                # if this is the case then gt is probably already a one hot encoding
+-                y_onehot = y
++                y_onehot = (y != 0).to(torch.uint8) if y.dtype != torch.uint8 else y
+             else:
+-                y_onehot = torch.zeros(x.shape, device=x.device)
++                y_onehot = torch.zeros(x.shape, device=x.device, dtype=torch.uint8)
+                 y_onehot.scatter_(1, y.long(), 1)
+ 
+             if not self.do_bg:
+                 y_onehot = y_onehot[:, 1:]
+ 
+-            gt_diff_x = y_onehot[:, :, 1:] - y_onehot[:, :, :-1]
+-            gt_diff_y = y_onehot[:, :, :, 1:] - y_onehot[:, :, :, :-1]
+-            gt_diff_z = y_onehot[:, :, :, :, 1:] - y_onehot[:, :, :, :, :-1]
+-
+-        # this one MUST be outside the with torch.no_grad(): context. Otherwise no gradients for you
+         if not self.do_bg:
+             x = x[:, 1:]
+ 
+-        pred_diff_x = x[:, :, 1:] - x[:, :, :-1]
+-        pred_diff_y = x[:, :, :, 1:] - x[:, :, :, :-1]
+-        pred_diff_z = x[:, :, :, :, 1:] - x[:, :, :, :, :-1]
+-        
+-        loss = (((gt_diff_x - pred_diff_x) ** 2).mean() + ((gt_diff_y - pred_diff_y) ** 2).mean() + ((gt_diff_z - pred_diff_z) ** 2).mean()) / 3.
+-
+-        return loss
++        loss = 0.
++        for dim in (2, 3, 4):
++            loss = loss + checkpoint(_axis_sq_diff_mean, x, y_onehot, dim, use_reentrant=False)
++        return loss / 3.
+ 
+ class DC_SkelREC_Diff_and_CE_loss(nn.Module):
+     def __init__(self, soft_dice_kwargs, soft_skelrec_kwargs, ce_kwargs, diff_kwargs, weight_ce=1, weight_dice=1, weight_srec=1, weight_diff=1, 
+-- 
+2.55.0
+
