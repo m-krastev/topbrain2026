@@ -1,0 +1,26 @@
+# Runtime dependencies of the UZH nnU-Net fork, pinned to the versions in the
+# training environment (.venv-uzh). torch comes from the base image.
+acvl-utils==0.2.6
+batchgenerators==0.25.3
+batchgeneratorsv2==0.3.5
+blosc2==4.13.1
+dicom2nifti==2.6.2
+dynamic-network-architectures==0.4.4
+einops==0.8.2
+graphviz==0.21
+imagecodecs==2026.8.16
+loguru==0.7.3
+matplotlib==3.11.2
+nibabel==5.4.2
+numpy==2.5.3
+omegaconf==2.3.1
+pandas==3.0.6
+requests==2.34.2
+scikit-image==0.24.0
+scikit-learn==1.9.1
+scipy==1.18.1
+seaborn==0.13.2
+SimpleITK==2.5.6
+tifffile==2026.9.20
+tqdm==4.70.1
+yacs==0.1.8

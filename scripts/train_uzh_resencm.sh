@@ -20,10 +20,23 @@
 #   [EPOCHS=200] [FOREGROUND=1] [ARCH=resencm|plainconv] scripts/train_uzh_resencm.sh [FOLD]
 # ARCH=plainconv is their second ensemble member (train_..._DS_plainConv.sh):
 # plain nnU-Net config, CE weights bg 0.5 / max 2.5, per-sample Dice.
+# Variants and fine-tuning (defaults are their settings):
+#   TRAINER     trainer class, e.g. Tr_rot30_Mirror01_DiffClusterSM_TopK_ceWFocal_EnvCfg
+#               from uzh_trainers.py (focal_gamma is passed through if set)
+#   PRETRAINED  checkpoint to start from (-pretrained_weights: weights only, fresh
+#               optimiser and schedule), as their 2025 models started from TopCoW
+#   LR          initial and head learning rate (default 1e-2; theirs x0.1 = 1e-3
+#               when fine-tuning)
+#   TAG         suffix for the output folder, required with TRAINER or PRETRAINED
 set -euo pipefail
 
 FOLD="${1:-0}"
 EPOCHS="${EPOCHS:-200}"
+TRAINER="${TRAINER:-Tr_rot30_Mirror01_DiffClusterSM_TopK_ceW_EnvCfg}"
+LR="${LR:-1e-2}"
+if [ -n "${PRETRAINED:-}" ] || [ "$TRAINER" != Tr_rot30_Mirror01_DiffClusterSM_TopK_ceW_EnvCfg ]; then
+    : "${TAG:?set TAG to name the output folder of a variant or fine-tune}"
+fi
 NUM_DS_LEVELS=3
 DATASET_NAME=Dataset102_TopBrainTA36Aug
 ARCH="${ARCH:-resencm}"
@@ -41,7 +54,7 @@ cd "$(dirname "$0")/.."
 ROOT="$PWD"
 mkdir -p logs
 RESULTS="$ROOT/nnunet/results_uzh"
-OUT="$RESULTS/$DATASET_NAME/${OUT_PREFIX}_diff_cluster_noMirror_bs2_ps80_192_128_allLR1e-2_clsBalSamp_degree0.75_noTopcowPretrain_ep${EPOCHS}_DS${NUM_DS_LEVELS}"
+OUT="$RESULTS/$DATASET_NAME/${OUT_PREFIX}_diff_cluster_noMirror_bs2_ps80_192_128_allLR1e-2_clsBalSamp_degree0.75_noTopcowPretrain_ep${EPOCHS}_DS${NUM_DS_LEVELS}${TAG:+_$TAG}"
 
 ENVS=(
     nnUNet_raw="$ROOT/nnunet/raw"
@@ -64,18 +77,25 @@ ENVS=(
     enable_deep_supervision=1
     num_epochs_per_val="${VAL_EVERY:-$((EPOCHS + 1))}"
 )
+[ -n "${focal_gamma:-}" ] && ENVS+=(focal_gamma="$focal_gamma")
 CMD=("$ROOT/.venv-uzh/bin/nnUNetv2_train" "$DATASET_NAME" "$CONFIG" "$FOLD"
-     -tr Tr_rot30_Mirror01_DiffClusterSM_TopK_ceW_EnvCfg
+     -tr "$TRAINER"
      --num_epochs "$EPOCHS"
-     --initial_lr 1e-2 --cls_lr 1e-2
-     --output_folder_base "$OUT" --c)
+     --initial_lr "$LR" --cls_lr "$LR"
+     --output_folder_base "$OUT")
+# their run_training refuses --c together with pretrained weights
+if [ -n "${PRETRAINED:-}" ]; then
+    CMD+=(-pretrained_weights "$PRETRAINED")
+else
+    CMD+=(--c)
+fi
 
 echo "out:  $OUT"
 if [ "${FOREGROUND:-0}" = 1 ]; then
     exec env "${ENVS[@]}" "${CMD[@]}"
 fi
 
-UNIT="topbrain-uzh-${ARCH}-f${FOLD}-ep${EPOCHS}-$(date +%Y%m%d-%H%M)"
+UNIT="topbrain-uzh-${ARCH}-f${FOLD}-ep${EPOCHS}${TAG:+-$TAG}-$(date +%Y%m%d-%H%M)"
 LOG="$ROOT/logs/$UNIT.log"
 systemd-run --user --unit="$UNIT" --collect \
     "${ENVS[@]/#/--setenv=}" \

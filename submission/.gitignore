@@ -1,0 +1,6 @@
+build/
+model/
+model.tar.gz
+*.tar.gz
+test/input/**/*.mha
+test/output*/
