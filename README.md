@@ -9,7 +9,19 @@ Challenge container. An error analysis under the official metrics shows that
 vessels of variable presence, predicted but absent from the reference, dominate
 the remaining HD95 error. The underlying model is the organisers' (UZH) nnU-Net
 baseline, trained with their own fork and settings from their released Docker
-image.
+image. This repository adds the work around it: a reimplementation of the
+baseline's training-set construction (cross-modal registration with a quality
+check, label-swapped mirroring), a memory-reduced rewrite of one loss term so
+training fits on a 16 GB GPU, left-right swap TTA, fragment removal and
+confidence-based class dropping, the error analysis, and the submission
+container.
+
+![Reference and predicted vessel labels for two held-out scans](docs/projection.png)
+
+Two held-out scans close to the fold's median score (class-averaged Dice 0.706
+for CT 013 and 0.709 for MR 016), reference against the submission pipeline's
+prediction. Each pixel shows the first labelled vessel along the viewing
+direction (`scripts/figure_mip.py`).
 
 ## Data and setup
 
@@ -81,6 +93,7 @@ scripts/
   predict_tta.py              inference with left-right swap TTA
   postprocess.py              fragment removal, confidence-based class dropping
   evaluate.py                 official TopBrain metrics (12 leaderboard scores)
+  figure_mip.py               label projections of reference and prediction
   extract_image_src.py        fork source from the organisers' Docker image
   jobs/                       small job queue for the GPU host (systemd)
 topbrain_trainers.py          stock nnU-Net trainer variants (Dice + focal)
